@@ -1,8 +1,11 @@
+import json
 import sys
 from datetime import datetime, timedelta
 
 import requests
 from bs4 import BeautifulSoup
+
+from models import Ad
 
 MONTHS = {
     'jan': 1,
@@ -20,33 +23,8 @@ MONTHS = {
 }
 
 
-class Ad:
-    """Ad model"""
-
-    def __init__(self, **kwargs) -> None:
-        self.title = kwargs.get('title')
-        self.link = kwargs.get('link')
-        self.img = kwargs.get('img')
-        self.info = kwargs.get('info')
-        self.value = kwargs.get('value')
-        self.date = kwargs.get('date')
-        self.location = kwargs.get('location')
-        self.vendor_type = kwargs.get('vendor_type')
-
-    def print(self):
-        """Print class attributes"""
-        print(f'title: {self.title}')
-        print(f'link: {self.link}')
-        print(f'img: {self.img}')
-        print(f'info: {self.info}')
-        print(f'value: {self.value}')
-        print(f'date: {self.date}')
-        print(f'location: {self.location}')
-        print(f'vendor_type: {self.vendor_type}')
-
-
-def scrap(url):
-    """Scrap a OLX ad list page extracting data from each ad"""
+def scrape(url):
+    """Scrape a OLX ad list page extracting data from each ad"""
     response = requests.get(
         url,
         headers={
@@ -61,7 +39,7 @@ def scrap(url):
     else:
         soup = BeautifulSoup(response.text, 'html.parser')
         ads = soup.find('ul', {'id': 'ad-list'})
-
+        scraped_ads = []
         for ad in ads.contents:
             ad = ad.a
             if ad is None:
@@ -108,10 +86,15 @@ def scrap(url):
             ad_obj.location = other_data.pop(0)
             if other_data:
                 ad_obj.vendor_type = other_data.pop(0)
+            scraped_ads.append(ad_obj)
 
-            ad_obj.print()
-            print()
+        with open('result.json', 'w', encoding='utf-8') as output_fp:
+            json.dump(
+                [ad_obj.serialized() for ad_obj in scraped_ads],
+                output_fp,
+                indent=2
+            )
 
 
 if __name__ == '__main__':
-    scrap(url=sys.argv[1])
+    scrape(url=sys.argv[1])
