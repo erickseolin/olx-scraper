@@ -5,8 +5,9 @@ from datetime import datetime, timedelta
 import requests
 from bs4 import BeautifulSoup
 
-from models import Ad
+from models import Ad, Filter
 
+DEFAULT_FILTER_PATH = 'filter.json'
 MONTHS = {
     'jan': 1,
     'fev': 2,
@@ -42,7 +43,7 @@ def scrape_ad(ad_element):
         value=other_data.pop(0)
     )
 
-    # discart previous ad value
+    # discard previous ad value
     if other_data[0].startswith('R$'):
         other_data.pop(0)
 
@@ -87,12 +88,14 @@ def scrape(url):
     if response.status_code != 200:
         print(f'Erro ao tentar baixar a página ({response.status_code})')
     else:
+        ad_filter = Filter.load_from_file(DEFAULT_FILTER_PATH)
+
         soup = BeautifulSoup(response.text, 'html.parser')
         ads = soup.find('ul', {'id': 'ad-list'})
         scraped_ads = []
         for ad_element in ads.contents:
             ad_obj = scrape_ad(ad_element)
-            if ad_obj is not None:
+            if ad_obj is not None and ad_filter.should_filter(ad_obj):
                 scraped_ads.append(ad_obj)
 
         with open('result.json', 'w', encoding='utf-8') as output_fp:
@@ -101,6 +104,7 @@ def scrape(url):
                 output_fp,
                 indent=2
             )
+        print(f'{len(scraped_ads)} ads saved!')
 
 
 if __name__ == '__main__':
