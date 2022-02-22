@@ -22,4 +22,29 @@ Example:
 python scrape.py 'https://www.olx.com.br/imoveis/venda/casas?q=sobrado'
 ```
 
+The retrieved ads will be saved in the _result.json_ file.
+
 _Currently the scrape works only for **properties ads** in the **Brazilian portuguese website**._
+
+## Filtering ads
+
+It is possible to apply some filter to the ads to be retrieved by using a _filter.json_ file in the following format.
+
+```
+{
+    "exclude": {
+        "location": [        <-- filter out locations 
+            <location 1>,
+            <location 2>,
+            ...
+            <location N>
+        ]
+    }
+}
+```
+
+It is also possible to filter ads newer than a given date using the argument _--from-date_:
+
+```
+python scrape.py <url> --from-date MM/DD/YYYY
+```
