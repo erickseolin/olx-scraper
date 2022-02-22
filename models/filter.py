@@ -1,28 +1,30 @@
 import json
 from os.path import exists
-from typing import Any, Dict
 
 from models.ad import Ad
 
 
-class Filter:
+class Filter(dict):
     """Filter model"""
 
-    def __init__(self, ad_filter: Dict[str, Any]) -> None:
-        self.filter_config = ad_filter
-
-    def should_filter(self, ad: Ad):
-        """Whether to filter the given ad"""
-        to_exclude = self.filter_config.get('exclude', {})
+    def should_filter(self, ad: Ad) -> bool:
+        """Whether to keep the given ad."""
+        to_exclude = self.get('exclude', {})
         locations_to_exclude = to_exclude.get('location', [])
 
-        return ad.location not in locations_to_exclude
+        if ad.location in locations_to_exclude:
+            return False
+
+        if self.get('from_date') and ad.date < self['from_date']:
+            return False
+
+        return True
 
     @staticmethod
-    def load_from_file(filepath: str):
+    def load_from_file(filepath: str) -> 'Filter':
         """Load a filter from a file."""
         if exists(filepath):
             with open(filepath, 'r', encoding='utf-8') as filter_fp:
                 return Filter(json.load(filter_fp))
 
-        return Filter({})
+        return Filter()

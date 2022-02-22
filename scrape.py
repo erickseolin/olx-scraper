@@ -1,5 +1,5 @@
+import argparse
 import json
-import sys
 from datetime import datetime, timedelta
 
 import requests
@@ -74,7 +74,7 @@ def scrape_ad(ad_element):
     return ad_obj
 
 
-def scrape(url):
+def scrape(url: str, from_date: datetime = None):
     """Scrape a OLX ad list page extracting data from each ad"""
     response = requests.get(
         url,
@@ -89,6 +89,8 @@ def scrape(url):
         print(f'Erro ao tentar baixar a página ({response.status_code})')
     else:
         ad_filter = Filter.load_from_file(DEFAULT_FILTER_PATH)
+        if from_date:
+            ad_filter['from_date'] = from_date
 
         soup = BeautifulSoup(response.text, 'html.parser')
         ads = soup.find('ul', {'id': 'ad-list'})
@@ -107,5 +109,28 @@ def scrape(url):
         print(f'{len(scraped_ads)} ads saved!')
 
 
+def date(date_string: str) -> datetime:
+    """Validate and convert a date from string to datetime.
+
+    The date must be in the format MM/DD/YYYY.
+    """
+    return datetime.strptime(date_string, r'%m/%d/%Y')
+
+
 if __name__ == '__main__':
-    scrape(url=sys.argv[1])
+    parser = argparse.ArgumentParser(description='Scrape OLX ads.')
+    parser.add_argument(
+        'url',
+        help=('Url of the page to scrape. Should be the search page with a '
+              'list of ads.')
+    )
+    parser.add_argument(
+        '--from-date',
+        dest='from_date',
+        type=date,
+        default=None,
+        help=('The date to start the search from. Will scrape only ads newer '
+              'than this date. The format must be MM/DD/YYYY')
+    )
+    args = parser.parse_args()
+    scrape(url=args.url, from_date=args.from_date)
