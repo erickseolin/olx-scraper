@@ -35,13 +35,6 @@ def scrape_ad(ad_element):
     title = data_div.find('h2').get_text()
     other_data = [span.get_text() for span in data_div.find_all('span')]
 
-    ad_obj = Ad(
-        title=title,
-        link=ad_link_url,
-        img=image_url,
-        value=other_data.pop(0)
-    )
-
     # discard previous ad value
     if other_data[0].startswith('R$'):
         other_data.pop(0)
@@ -65,14 +58,22 @@ def scrape_ad(ad_element):
         minute=int(minutes)
     )
 
-    ad_obj.date = publication_datetime
-    ad_obj.location = other_data.pop(-1)
+    location = other_data.pop(-1)
     if other_data:
-        ad_obj.vendor_type = other_data.pop(-1)
+        vendor_type = other_data.pop(-1)
+    else:
+        vendor_type = ''
 
-    ad_obj.info = ' | '.join(other_data[1::2])
-
-    return ad_obj
+    return Ad(
+        title=title,
+        link=ad_link_url,
+        img=image_url,
+        value=other_data.pop(0),
+        date=publication_datetime,
+        location=location,
+        vendor_type=vendor_type,
+        info=' | '.join(other_data[1::2])
+    )
 
 
 def scrape(url: str, from_date: datetime = None):
