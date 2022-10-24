@@ -39,7 +39,6 @@ def scrape_ad(ad_element):
         title=title,
         link=ad_link_url,
         img=image_url,
-        info=other_data.pop(0),
         value=other_data.pop(0)
     )
 
@@ -47,7 +46,7 @@ def scrape_ad(ad_element):
     if other_data[0].startswith('R$'):
         other_data.pop(0)
 
-    publication_day = other_data.pop(0).lower()
+    publication_day, publication_time = other_data.pop(-1).lower().split(', ')
     if publication_day == 'hoje':
         publication_day = datetime.today()
     elif publication_day == 'ontem':
@@ -60,16 +59,18 @@ def scrape_ad(ad_element):
             day=int(day)
         )
 
-    hour, minutes = other_data.pop(0).split(':')
+    hour, minutes = publication_time.split(':')
     publication_datetime = publication_day.replace(
         hour=int(hour),
         minute=int(minutes)
     )
 
     ad_obj.date = publication_datetime
-    ad_obj.location = other_data.pop(0)
+    ad_obj.location = other_data.pop(-1)
     if other_data:
-        ad_obj.vendor_type = other_data.pop(0)
+        ad_obj.vendor_type = other_data.pop(-1)
+
+    ad_obj.info = ' | '.join(other_data[1::2])
 
     return ad_obj
 
