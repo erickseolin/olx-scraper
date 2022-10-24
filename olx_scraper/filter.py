@@ -1,7 +1,7 @@
 import json
 from os.path import exists
 
-from models.ad import Ad
+from olx_scraper.models import Ad
 
 
 class Filter(dict):
